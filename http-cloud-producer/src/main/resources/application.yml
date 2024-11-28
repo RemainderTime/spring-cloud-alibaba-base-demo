@@ -1,0 +1,35 @@
+server:
+  port: 9091
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+spring:
+  application:
+    name: http-cloud-producer
+  cloud:
+    nacos:
+      config: #配置中心
+        server-addr: 127.0.0.1:8848
+        prefix: http-cloud-producer
+        username: nacos
+        password:
+        namespace: 74193cd9-fac4-4f2a-addc-47c60508b15c
+#      discovery: #注册中心
+#        server-addr: 127.0.0.1:8848
+#        username: nacos
+#        password:
+#        namespace:
+#    loadbalancer: #开启负载均衡
+#      nacos:
+#        enabled: true
+  config:
+    import: #指定加载配置的方式以及文件
+      - nacos:http-cloud-producer.yaml
+
+
+logging:
+  level:
+    com.alibaba.cloud.nacos.configdata: debug
