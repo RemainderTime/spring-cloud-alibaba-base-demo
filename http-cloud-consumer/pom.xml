@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.xf</groupId> <!-- 对应父模块的 groupId -->
+        <artifactId>spring-cloud-alibaba-base-demo</artifactId> <!-- 对应父模块的 artifactId -->
+        <version>0.0.1-SNAPSHOT</version> <!-- 对应父模块的版本 -->
+        <relativePath>../pom.xml</relativePath> <!-- 父模块的位置 -->
+    </parent>
+    <groupId>com.xf</groupId>
+    <artifactId>http-cloud-consumer</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>cloud-consumer</name>
+    <description>cloud-consumer</description>
+    <url/>
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+    <dependencies>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
