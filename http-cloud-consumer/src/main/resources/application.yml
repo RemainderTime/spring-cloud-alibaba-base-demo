@@ -1,0 +1,37 @@
+server:
+  port: 9092
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+spring:
+  application:
+    name: http-cloud-consumer
+  cloud:
+    nacos:
+      config: #配置中心
+        server-addr: 127.0.0.1:8848
+        prefix: http-cloud
+        username: nacos
+        password:
+        namespace: 74193cd9-fac4-4f2a-addc-47c60508b15c
+#      discovery: #注册中心
+#        server-addr: 127.0.0.1:8848
+#        username: nacos
+#        password:
+#        namespace:
+#      loadbalancer: #开启负载均衡
+#        nacos:
+#          enabled: true
+#        retry:
+#          enabled: true # 启用负载均衡重试机制 负载均衡策略默认为轮询，想要修改策略新版本中需要手动java代码配置，新版本中配置文件的方式不支持了,更灵活但略复杂
+  config:
+    import: #指定加载配置的方式以及文件
+      - nacos:http-cloud-producer.yaml
+
+
+logging:
+  level:
+    com.alibaba.cloud.nacos.configdata: debug

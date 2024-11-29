@@ -11,13 +11,17 @@
     <groupId>com.xf</groupId>
     <artifactId>http-cloud-consumer</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>cloud-consumer</name>
-    <description>cloud-consumer</description>
+    <name>http-cloud-consumer</name>
+    <description>http-cloud-consumer</description>
     <url/>
     <properties>
         <java.version>17</java.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
