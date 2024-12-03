@@ -1,8 +1,9 @@
-package com.xf.demo.controller.service;
+package com.xf.demo.service;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * packageName com.xf.demo.controller.service
@@ -19,4 +20,8 @@ public interface FeignService {
 
     @GetMapping(value = "/test/feign01")
     String feignInfo01();
+
+    @GetMapping(value = "/test/seata/deInventory")
+    void deInventorySeata(@RequestParam("num") Integer num,@RequestParam("productId") Integer productId);
+
 }

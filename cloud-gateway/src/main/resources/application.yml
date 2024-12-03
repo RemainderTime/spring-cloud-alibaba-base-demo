@@ -17,15 +17,15 @@ spring:
 #            - RewritePath=/test/(?<segment>.*), /test/feign/${segment}  # 重写为生产者的接口路径
     nacos:
       config: #配置中心
-        server-addr: 117.72.35.70:8848
+        server-addr: 127.0.0.1:8848
         prefix: http-cloud
         username: nacos
-        password: love..520
+        password:
         namespace: 74193cd9-fac4-4f2a-addc-47c60508b15c
 
   config:
     import: #指定加载配置的方式以及文件
-      - nacos:http-cloud-producer.yaml
+      - nacos:cloud-gateway.yaml
 
 logging:
   level:
