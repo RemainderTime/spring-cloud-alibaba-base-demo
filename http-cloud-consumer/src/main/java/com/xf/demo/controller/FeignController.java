@@ -28,4 +28,9 @@ public class FeignController {
     public String rest(@PathVariable String str) {
         return feignService.feignInfo(str);
     }
+
+    @GetMapping(value = "/feign01")
+    public String rest01() {
+        return feignService.feignInfo01();
+    }
 }

@@ -1,0 +1,35 @@
+server:
+  port: 9090
+spring:
+  application:
+    name: cloud-gateway  # 网关服务的名称
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true  # 开启自动服务发现
+      routes:
+        - id: http-producer-route
+          uri: lb://http-cloud-producer
+          predicates:
+            - Path=/test/**  # 匹配路径 /test/...
+#          filters:
+#            - RewritePath=/test/(?<segment>.*), /test/feign/${segment}  # 重写为生产者的接口路径
+    nacos:
+      config: #配置中心
+        server-addr: 117.72.35.70:8848
+        prefix: http-cloud
+        username: nacos
+        password: love..520
+        namespace: 74193cd9-fac4-4f2a-addc-47c60508b15c
+
+  config:
+    import: #指定加载配置的方式以及文件
+      - nacos:http-cloud-producer.yaml
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.nacos.discovery: DEBUG
+
+

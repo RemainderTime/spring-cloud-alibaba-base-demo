@@ -14,8 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class DemoController {
 
-    @GetMapping(value = "/test/{string}")
+    @GetMapping(value = "/test/feign/{string}")
     public String test(@PathVariable String string) {
         return string;
+    }
+
+    @GetMapping(value = "/test/feign01")
+    public String test01() {
+        return "成功了~~~";
     }
 }

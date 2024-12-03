@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.PathVariable;
  * @date 2024/11/29
  * @description 远程调用接口
  */
-@FeignClient(name = "http-cloud-producer", url = "http://localhost:9091")
+@FeignClient(name = "cloud-gateway")
 public interface FeignService {
 
-    @GetMapping(value = "/test/{str}")
+    @GetMapping(value = "/test/feign/{str}")
     String feignInfo(@PathVariable("str") String str);
+
+    @GetMapping(value = "/test/feign01")
+    String feignInfo01();
 }
