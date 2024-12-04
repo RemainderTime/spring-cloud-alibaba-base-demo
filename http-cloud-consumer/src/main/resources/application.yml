@@ -38,6 +38,11 @@ spring:
     import: #指定加载配置的方式以及文件
       - nacos:http-cloud-producer.yaml
 
+#打开 Sentinel 对 Feign 的支持
+feign:
+  sentinel:
+    enabled: true
+
 #seata:
 #  enabled: true
 #  application-id: ${spring.application.name}
