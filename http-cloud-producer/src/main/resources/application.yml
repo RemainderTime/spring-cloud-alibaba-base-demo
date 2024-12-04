@@ -10,6 +10,13 @@ spring:
   application:
     name: http-cloud-producer
   cloud:
+    sentinel: #流量控制中心
+      transport:
+        dashboard: localhost:8089 # sentinel-dashboard地址
+        port: 8721
+      eager: true
+      filter:
+        enabled: true
     nacos:
       config: #配置中心
         server-addr: 127.0.0.1:8848
