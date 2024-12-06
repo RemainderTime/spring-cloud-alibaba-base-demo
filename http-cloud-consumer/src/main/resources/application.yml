@@ -10,6 +10,24 @@ spring:
   application:
     name: http-cloud-consumer
   cloud:
+    stream: #消息中间件
+      rocketmq:
+        binder:
+          name-server: localhost:9876
+        bindings:
+          consumer0-in-0:
+            consumer:
+              messageModel: CLUSTERING
+          consumer1-in-0:
+            consumer:
+              messageModel: CLUSTERING
+      bindings:
+        consumer0-in-0:
+          destination: topic0
+          group: clustering-consumer
+        consumer1-in-0:
+          destination: topic1
+          group: clustering-consumer
     sentinel: #流量控制中心
       transport:
         dashboard: localhost:8089 # sentinel-dashboard地址
@@ -65,3 +83,5 @@ feign:
 logging:
   level:
     com.alibaba.cloud.nacos.configdata: debug
+#    org.springframework.cloud.stream: DEBUG
+#    org.springframework.integration: DEBUG
