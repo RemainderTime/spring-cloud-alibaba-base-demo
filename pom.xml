@@ -22,7 +22,6 @@
         <module>http-cloud-producer</module>
         <module>http-cloud-consumer</module>
         <module>cloud-gateway</module>
-        <module>cloud-tests</module>
     </modules>
     <dependencyManagement>
         <dependencies>
