@@ -56,6 +56,11 @@
             <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
             <version>4.3.1</version>
         </dependency>
+        <!-- 引入消息队列 stream rocketmq -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-stream-rocketmq</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
