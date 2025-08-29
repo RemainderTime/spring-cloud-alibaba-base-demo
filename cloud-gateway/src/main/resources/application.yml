@@ -1,35 +1,26 @@
-server:
-  port: 9090
 spring:
   application:
     name: cloud-gateway  # 网关服务的名称
+  profiles:
+    active: dev
   cloud:
-    gateway:
-      discovery:
-        locator:
-          enabled: true  # 开启自动服务发现
-      routes:
-        - id: http-producer-route
-          uri: lb://http-cloud-producer
-          predicates:
-            - Path=/test/**  # 匹配路径 /test/...
-#          filters:
-#            - RewritePath=/test/(?<segment>.*), /test/feign/${segment}  # 重写为生产者的接口路径
     nacos:
       config: #配置中心
-        server-addr: 127.0.0.1:8848
-        prefix: http-cloud
-        username: nacos
-        password:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        #prefix: http-cloud
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PWD:nacos}
         namespace: 74193cd9-fac4-4f2a-addc-47c60508b15c
-
+        file-extension: yaml
   config:
     import: #指定加载配置的方式以及文件
-      - nacos:cloud-gateway.yaml
-
-logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.cloud.nacos.discovery: DEBUG
+      - nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+      - nacos:seata-common.yaml
 
 
+#Spring Boot 2.4+ 已经废弃bootstrap.yml
+#（原因之一：Spring Boot 本来有一套 application.yml + spring.profiles.active 的配置体系，
+#bootstrap.yml 算是 Spring Cloud 强行加的，跟 Spring Boot 的设计理念不统一）
+
+#Spring Boot 2.4+之后引入spring.config.import 统一声明外部配置源 支持 optional:（可选加载，不存在也不会报错）
+#所有配置都回归到 application.yml 里，避免了“两个入口”的混乱
