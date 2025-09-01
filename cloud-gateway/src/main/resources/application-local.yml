@@ -7,12 +7,18 @@ spring:
         locator:
           enabled: true  # 开启自动服务发现
       routes:
-        - id: http-producer-route
-          uri: lb://http-cloud-producer
+        - id: cloud-producer
+          uri: lb://cloud-producer
           predicates:
             - Path=/producer/**  # 匹配路径 /test/...
-    #          filters:
-    #            - RewritePath=/test/(?<segment>.*), /test/feign/${segment}  # 重写为生产者的接口路径
+          filters:
+            - StripPrefix=1
+        - id: cloud-consumer
+          uri: lb://cloud-consumer
+          predicates:
+            - Path=/consumer/**
+          filters:
+            - StripPrefix=1
     nacos:
       discovery: #注册中心
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
