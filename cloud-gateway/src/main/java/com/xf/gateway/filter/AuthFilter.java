@@ -45,7 +45,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 		}
 		// 校验 Token（假设用 JWT）
 		String jwt = token.substring(7);
-		String value = (String) redisTemplate.opsForValue().get("alibaba-token:" + token);
+		String value = (String) redisTemplate.opsForValue().get("alibaba-token:" + jwt);
 		if (StringUtils.isEmpty(value)) {
 			throw new RuntimeException("请先登录");
 		}

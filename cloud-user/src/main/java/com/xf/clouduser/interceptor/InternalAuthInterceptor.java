@@ -2,6 +2,7 @@ package com.xf.clouduser.interceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
@@ -11,6 +12,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
  * @Date: 2025/9/1 22:57
  * @Version: 1.0
  */
+@Component
 public class InternalAuthInterceptor implements HandlerInterceptor {
 
 	private static final String INTERNAL_SECRET = "expected-secret";

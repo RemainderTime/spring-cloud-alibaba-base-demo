@@ -5,12 +5,12 @@ spring:
     active: dev
   cloud:
     nacos:
-      config: #????
+      config:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
         username: ${NACOS_USERNAME:nacos}
         password: ${NACOS_PWD:nacos}
         file-extension: yaml
         namespace: 74193cd9-fac4-4f2a-addc-47c60508b15c
   config:
-    import: #?????????????
+    import:
       - nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
