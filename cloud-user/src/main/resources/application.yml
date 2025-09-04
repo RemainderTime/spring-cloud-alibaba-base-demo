@@ -5,11 +5,17 @@ spring:
     active: dev
   cloud:
     nacos:
+      discovery: #注册中心
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PWD:nacos}
+        namespace: 74193cd9-fac4-4f2a-addc-47c60508b15c
+        cluster-name: DEFAULT  # 集群名称，保持一致
       config:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
         username: ${NACOS_USERNAME:nacos}
         password: ${NACOS_PWD:nacos}
-        file-extension: yaml
+        file-extension: yml
         namespace: 74193cd9-fac4-4f2a-addc-47c60508b15c
   config:
     import:

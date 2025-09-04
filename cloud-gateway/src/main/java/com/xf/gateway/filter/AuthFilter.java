@@ -16,6 +16,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.security.auth.login.LoginException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @Description:
@@ -27,6 +29,8 @@ import javax.security.auth.login.LoginException;
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
 
+	private static final List<String> EXCLUDE_PATH_LIST = Arrays.asList("/user/user/login", "/web/login", "/swagger-ui.html", "/v3/api-docs", "/swagger-ui/index.html");
+
 	@Autowired
 	private RedisTemplate redisTemplate;
 
@@ -36,7 +40,11 @@ public class AuthFilter implements GlobalFilter, Ordered {
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 		ServerHttpRequest request = exchange.getRequest();
-
+		String requestURI = request.getURI().getPath();
+		   // 白名单直接放行
+		if (EXCLUDE_PATH_LIST.stream().anyMatch(requestURI::startsWith)) {
+			return chain.filter(exchange);
+		}
 		// 获取 Token
 		String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 		if (token == null || !token.startsWith("Bearer ")) {

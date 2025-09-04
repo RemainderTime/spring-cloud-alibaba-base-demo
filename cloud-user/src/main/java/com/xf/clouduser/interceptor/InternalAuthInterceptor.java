@@ -23,7 +23,7 @@ public class InternalAuthInterceptor implements HandlerInterceptor {
 		String header = request.getHeader("X-Internal-Auth");
 		if (!INTERNAL_SECRET.equals(header)) {
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-			response.getWriter().write("Forbidden: Invalid Gateway Access");
+			response.getWriter().write("非法访问接口，禁止绕过网关访问");
 			return false;
 		}
 		return true;
