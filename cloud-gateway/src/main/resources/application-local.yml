@@ -10,13 +10,19 @@ spring:
         - id: cloud-producer
           uri: lb://cloud-producer
           predicates:
-            - Path=/producer/**  # 匹配路径 /test/...
+            - Path=/cloud-producer/**  # 匹配路径 /test/...
           filters:
             - StripPrefix=1
         - id: cloud-consumer
           uri: lb://cloud-consumer
           predicates:
-            - Path=/consumer/**
+            - Path=/cloud-consumer/**
+          filters:
+            - StripPrefix=1
+        - id: cloud-user
+          uri: lb://cloud-user
+          predicates:
+            - Path=/cloud-user/**
           filters:
             - StripPrefix=1
     nacos:

@@ -23,7 +23,7 @@ public class SecurityConfig {
 		http
 				.csrf(csrf -> csrf.disable())  // 禁用 CSRF
 				.authorizeExchange(exchanges -> exchanges
-						.pathMatchers("/user/user/login", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+						.pathMatchers("/**").permitAll() //放行所有接口
 						.anyExchange().authenticated()
 				);
 		return http.build();

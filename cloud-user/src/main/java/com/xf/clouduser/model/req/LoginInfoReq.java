@@ -11,7 +11,8 @@ import lombok.Data;
  **/
 @Data
 public class LoginInfoReq {
-    private String account;
-    private String password;
 
+    private String account;
+
+    private String password;
 }
