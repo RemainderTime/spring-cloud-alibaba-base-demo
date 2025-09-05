@@ -1,31 +1,27 @@
 package com.xf.gateway.filter;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xf.gateway.model.LoginUser;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-
-import javax.security.auth.login.LoginException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 /**
  * @Description:
@@ -74,15 +70,16 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
         // 校验 Token
         String jwt = token.substring(7);
-        String value = (String) redisTemplate.opsForValue().get("alibaba-token:" + jwt);
-        if (StringUtils.isEmpty(value)) {
-            throw new RuntimeException("请先登录");
-        }
-        JSONObject jsonObject = JSONObject.parseObject(value);
-        //JSON对象转换成Java对象
-        LoginUser loginUserInfo = JSONObject.toJavaObject(jsonObject, LoginUser.class);
-        if (loginUserInfo == null || loginUserInfo.getId() <= 0) {
-            throw new RuntimeException("用户登录异常");
+        log.info("是否存在token缓存-----{}",redisTemplate.hasKey("alibaba-token:" + jwt));
+        String userInfoJson = (String) redisTemplate.opsForValue().get("alibaba-token:" + jwt);
+        if (Objects.isNull(userInfoJson)) {
+            // 登录校验失败，直接返回 JSON 响应
+            String body = "{\"code\":500,\"msg\":\"请先登录\"}";
+            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+            DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+            exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+            exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return exchange.getResponse().writeWith(Mono.just(buffer));
         }
         // 修改请求头
         ServerHttpRequestDecorator decorator = new ServerHttpRequestDecorator(exchange.getRequest()) {
@@ -91,11 +88,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
                 HttpHeaders headers = new HttpHeaders();
                 headers.putAll(super.getHeaders());  // 复制原始 headers
                 headers.set("X-Internal-Auth", SECRET_KEY); // 安全加 header
-                ObjectMapper mapper = new ObjectMapper();
-
-                String userJson = JSON.toJSONString(mapper.convertValue(loginUserInfo, Map.class));
                 //Header 默认只支持 ISO-8859-1,直接放中文 JSON 会被错误解码,所以传输时加密转码UTF-8
-                String base64 = Base64.getEncoder().encodeToString(userJson.getBytes(StandardCharsets.UTF_8));
+                String base64 = Base64.getEncoder().encodeToString(userInfoJson.getBytes(StandardCharsets.UTF_8));
                 headers.set("X-UserInfo", base64); // 添加用户信息
                 return headers;
             }

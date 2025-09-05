@@ -1,5 +1,6 @@
 package com.xf.clouduser.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -50,7 +51,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 		String token = JwtTokenUtils.createToken(user.getId());
 		loginUser.setToken(token);
 		//缓存token
-		redisTemplate.opsForValue().set("alibaba-token:" + token, JSONObject.toJSONString(loginUser), 3600, TimeUnit.SECONDS);
+		redisTemplate.opsForValue().set("alibaba-token:" + token, JSON.toJSONString(loginUser), 3600, TimeUnit.SECONDS);
 		redisTemplate.opsForValue().set("alibaba_user_login_token:" + user.getId(), token, 3600, TimeUnit.SECONDS);
 		return RetObj.success(loginUser);
 	}
