@@ -18,10 +18,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @Description:
@@ -34,7 +31,7 @@ import java.util.Objects;
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
 
-    private static final List<String> EXCLUDE_PATH_LIST = Arrays.asList("/user/user/login", "/web/login", "/swagger-ui.html", "/v3/api-docs", "/swagger-ui/index.html");
+    private static final List<String> EXCLUDE_PATH_LIST = Arrays.asList("/cloud-user/user/login");
 
     @Resource
     private RedisTemplate redisTemplate;
@@ -64,14 +61,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
         // 获取 Token
         String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (token == null || !token.startsWith("Bearer ")) {
+        if (token == null || !token.startsWith("Bearer")) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
         // 校验 Token
-        String jwt = token.substring(7);
-        log.info("是否存在token缓存-----{}",redisTemplate.hasKey("alibaba-token:" + jwt));
-        String userInfoJson = (String) redisTemplate.opsForValue().get("alibaba-token:" + jwt);
+        token = token.substring(7);
+        String key = "alibaba-token:" + token;
+        String userInfoJson = (String) redisTemplate.opsForValue().get(key);
         if (Objects.isNull(userInfoJson)) {
             // 登录校验失败，直接返回 JSON 响应
             String body = "{\"code\":500,\"msg\":\"请先登录\"}";
