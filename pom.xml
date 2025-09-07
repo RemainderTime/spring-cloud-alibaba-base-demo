@@ -32,6 +32,7 @@
         <module>cloud-consumer</module>
         <module>cloud-gateway</module>
         <module>cloud-user</module>
+        <module>cloud-common</module>
     </modules>
 
     <dependencyManagement>

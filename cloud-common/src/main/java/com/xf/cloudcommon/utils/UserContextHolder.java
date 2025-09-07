@@ -1,4 +1,4 @@
-package com.xf.clouduser.utils;
+package com.xf.cloudcommon.utils;
 
 
 import java.util.Map;

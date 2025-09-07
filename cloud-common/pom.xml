@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.xf</groupId> <!-- 对应父模块的 groupId -->
+        <artifactId>spring-cloud-alibaba-base-demo</artifactId> <!-- 对应父模块的 artifactId -->
+        <version>0.0.1-SNAPSHOT</version> <!-- 对应父模块的版本 -->
+        <relativePath>../pom.xml</relativePath> <!-- 父模块的位置 -->
+    </parent>
+    <groupId>com.xf</groupId>
+    <artifactId>cloud-common</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>cloud-common</name>
+    <description>公共核心模块，用于提供工具类、配置类、序列化等功能</description>
+    <packaging>jar</packaging>
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+    <dependencies>
+
+        <!-- Web Starter 仅用于 Filter/Servlet API -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>provided</scope> <!-- 避免网关引入冲突 -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- JSON 工具 -->
+        <dependency>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+            <version>2.0.49</version>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+</project>
