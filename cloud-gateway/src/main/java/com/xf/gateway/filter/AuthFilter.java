@@ -62,8 +62,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
         // 获取 Token
         String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (token == null || !token.startsWith("Bearer")) {
+            String body = "{\"code\":401,\"msg\":\"请先登录\"}";
+            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+            DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+            exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return exchange.getResponse().writeWith(Mono.just(buffer));
         }
         // 校验 Token
         token = token.substring(7);
@@ -71,7 +75,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String userInfoJson = (String) redisTemplate.opsForValue().get(key);
         if (Objects.isNull(userInfoJson)) {
             // 登录校验失败，直接返回 JSON 响应
-            String body = "{\"code\":500,\"msg\":\"请先登录\"}";
+            String body = "{\"code\":500,\"msg\":\"登录token无效或已过期\"}";
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
             DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
             exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);

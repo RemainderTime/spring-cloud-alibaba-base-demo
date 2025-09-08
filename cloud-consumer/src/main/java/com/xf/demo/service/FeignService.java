@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 //普通使用
 //@FeignClient(name = "cloud-gateway")
 //集成sentinel 全部feign接口实现熔断降级
-@FeignClient(name = "cloud-gateway", fallback = FeignServiceFallback.class, configuration = FeignConfiguration.class)
+@FeignClient(name = "cloud-producer", fallback = FeignServiceFallback.class, configuration = FeignConfiguration.class)
 public interface FeignService {
 
     @GetMapping(value = "/test/feign/{str}")
