@@ -20,7 +20,6 @@ public class UserController {
 
 	@Autowired
 	private UserService userService;
-
     /**
      * 登录
      * @param req
@@ -39,5 +38,4 @@ public class UserController {
     public RetObj getUserName(){
         return RetObj.success(UserContextHolder.getName());
     }
-
 }

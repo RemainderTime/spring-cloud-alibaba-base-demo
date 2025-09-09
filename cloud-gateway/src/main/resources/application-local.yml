@@ -25,19 +25,11 @@ spring:
             - Path=/cloud-user/**
           filters:
             - StripPrefix=1
-    nacos:
-      discovery: #注册中心
-        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
-        username: ${NACOS_USERNAME:nacos}
-        password: ${NACOS_PWD:nacos}
-        namespace:
-        cluster-name: DEFAULT  # 集群名称，保持一致
     loadbalancer: #开启负载均衡
       nacos:
         enabled: true
       retry:
         enabled: true # 启用负载均衡重试机制 负载均衡策略默认为轮询，想要修改策略新版本中需要手动java代码配置，新版本中配置文件的方式不支持了,更灵活但略复杂
-
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

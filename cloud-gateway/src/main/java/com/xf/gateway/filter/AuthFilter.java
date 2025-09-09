@@ -30,15 +30,10 @@ import java.util.*;
 @Slf4j
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
-
     private static final List<String> EXCLUDE_PATH_LIST = Arrays.asList("/cloud-user/user/login");
-
     @Resource
     private RedisTemplate redisTemplate;
-
-
     private static final String SECRET_KEY = "expected-secret";
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
@@ -95,10 +90,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
                 .request(decorator)
                 .build());
     }
-
     @Override
     public int getOrder() {
         return -100; // 保证在最前面执行
     }
-
 }
