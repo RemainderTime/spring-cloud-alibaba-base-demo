@@ -25,6 +25,18 @@ spring:
             - Path=/cloud-user/**
           filters:
             - StripPrefix=1
+        - id: cloud-user-docs
+          uri: lb://cloud-user
+          predicates:
+            - Path=/cloud-user/v3/api-docs
+        - id: cloud-consumer-docs
+          uri: lb://cloud-consumer
+          predicates:
+            - Path=/cloud-consumer/v3/api-docs
+        - id: cloud-producer-docs
+          uri: lb://cloud-producer
+          predicates:
+            - Path=/cloud-producer/v3/api-docs
     nacos:
       discovery: #注册中心
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
@@ -37,6 +49,16 @@ spring:
         enabled: true
       retry:
         enabled: true # 启用负载均衡重试机制 负载均衡策略默认为轮询，想要修改策略新版本中需要手动java代码配置，新版本中配置文件的方式不支持了,更灵活但略复杂
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: cloud-producer
+        url: /cloud-producer/v3/api-docs
+      - name: cloud-consumer
+        url: /cloud-consumer/v3/api-docs
+      - name: 用户服务
+        url: /cloud-user/v3/api-docs
 
 logging:
   level:

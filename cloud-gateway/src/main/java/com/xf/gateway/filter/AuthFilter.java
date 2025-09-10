@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -31,7 +32,7 @@ import java.util.*;
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
 
-    private static final List<String> EXCLUDE_PATH_LIST = Arrays.asList("/cloud-user/user/login");
+    private static final List<String> EXCLUDE_PATH_LIST = List.of("/cloud-user/user/login");
 
     @Resource
     private RedisTemplate redisTemplate;
@@ -44,7 +45,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         String requestURI = request.getURI().getPath();
         // 白名单直接放行
-        if (EXCLUDE_PATH_LIST.stream().anyMatch(requestURI::startsWith)) {
+        if (EXCLUDE_PATH_LIST.stream().anyMatch(requestURI::startsWith) ||
+                requestURI.contains("/v3/api-docs") ||
+                requestURI.contains("/doc.html")) {
             //重新请求头方法，并设置自定义请求头数据
             ServerHttpRequestDecorator decorator = new ServerHttpRequestDecorator(exchange.getRequest()) {
                 @Override
@@ -61,7 +64,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
         // 获取 Token
         String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (token == null || !token.startsWith("Bearer")) {
+        if (token == null && !token.startsWith("Bearer")) {
             String body = "{\"code\":401,\"msg\":\"请先登录\"}";
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
             DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
@@ -70,7 +73,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
             return exchange.getResponse().writeWith(Mono.just(buffer));
         }
         // 校验 Token
-        token = token.substring(7);
+        if (token.startsWith("Bearer")) {
+            token = token.substring(7);
+        }
         String key = "alibaba-token:" + token;
         String userInfoJson = (String) redisTemplate.opsForValue().get(key);
         if (Objects.isNull(userInfoJson)) {
