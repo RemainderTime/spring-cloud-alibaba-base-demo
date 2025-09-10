@@ -31,13 +31,6 @@ spring:
             minimum-idle: 4  # 主数据源的最小空闲连接数
             maximum-pool-size: 20  # 主数据源的最大连接数
   cloud:
-    nacos:
-      discovery: #注册中心
-        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
-        username: ${NACOS_USERNAME:nacos}
-        password: ${NACOS_PWD:nacos}
-        namespace: 74193cd9-fac4-4f2a-addc-47c60508b15c
-        # cluster-name: DEFAULT  # 集群名称，保持一致
     loadbalancer: #开启负载均衡
       nacos:
         enabled: true
@@ -63,38 +56,6 @@ spring:
       eager: true
       filter:
         enabled: true
-
-seata:
-  server:
-    address: 127.0.0.1:8091
-  tm:
-    default-transaction-manager-type: AT   # 默认使用 AT 模式
-    default-timeout: 30000  # 设置全局事务超时
-  application-id: ${spring.application.name}  # 这里是应用的唯一标识，可以根据你的服务名称设置
-  tx-service-group: dubbo_tx_group  # 事务分组名称，确保每个 Dubbo 服务的 tx-service-group 一致
-  registry:
-    type: nacos  # 注册中心类型，如 nacos，若使用其他注册中心需要调整
-    nacos:
-      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
-      username: ${NACOS_USERNAME:nacos}
-      password: ${NACOS_PWD:nacos}
-      namespace: 581b3f92-be53-4537-b777-885ce60d07e9
-      group: SEATA_GROUP
-  config:
-    type: nacos
-    nacos:
-      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
-      username: ${NACOS_USERNAME:nacos}
-      password: ${NACOS_PWD:nacos}
-      namespace: "581b3f92-be53-4537-b777-885ce60d07e9"
-      group: SEATA_GROUP
-      data-id: "seata-server.properties"
-  service:
-    grouplist:
-      default: ${seata.address:127.0.0.1}:8091
-    enable-degrade: false
-    disable-global-transaction: false
-  enabled: true
 
 logging:
   level:
