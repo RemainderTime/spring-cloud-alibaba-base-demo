@@ -1,0 +1,18 @@
+spring:
+  data:
+    redis:
+      port: 6379
+      host: #ip
+      password: #密码
+      timeout: 5000
+      lettuce:   #参考博客 https://blog.csdn.net/weixin_43944305/article/details/124322595
+        pool:
+          maxActive: 5000
+          maxIdle: 30
+          minIdle: 5
+          max-wait: 2000
+          time-between-eviction-runs: 60s
+        cluster:
+          refresh:
+            adaptive: true
+            period: 60s
