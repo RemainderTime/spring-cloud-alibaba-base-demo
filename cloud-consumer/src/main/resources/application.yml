@@ -21,3 +21,4 @@ spring:
     import: #指定加载配置的方式以及文件
       - nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
       - nacos:seata-common.yaml
+      - nacos:rocketmq-common.yml
