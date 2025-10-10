@@ -1,7 +1,7 @@
 package com.xf.demo.controller;
 
 import com.xf.demo.mapper.SeataProductMapper;
-import com.xf.demo.mq.MessageProducer;
+import com.xf.demo.mq.RocketMQMessageProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +19,7 @@ public class DemoController {
     private SeataProductMapper seataProductMapper;
 
     @Autowired
-    private MessageProducer messageProducer;
+    private RocketMQMessageProducer rocketMQMessageProducer;
 
     @GetMapping(value = "/test/feign/{string}")
     public String test(@PathVariable String string) {
@@ -43,7 +43,7 @@ public class DemoController {
      */
     @GetMapping(value = "/test/mq/topic0")
     String sendMqTopic0(@RequestParam("message") String message) {
-        messageProducer.sendMessageToOutput0(message);
+        rocketMQMessageProducer.sendMessage("user-topic", message);
         return "topic0消息发送成功了~~~";
     }
 
@@ -54,7 +54,7 @@ public class DemoController {
      */
     @GetMapping(value = "/test/mq/topic1")
     String sendMqTopic1(@RequestParam("message") String message) {
-        messageProducer.sendMessageToOutput1(message);
+        rocketMQMessageProducer.sendMessage("user-topic","user-tag",message);
         return "topic1消息发送成功了~~~";
     }
 }
