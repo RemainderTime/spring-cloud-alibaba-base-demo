@@ -1,0 +1,17 @@
+rocketmq:
+  name-server: 117.72.35.70:9876
+  producer:
+    group: producer-group
+    send-message-timeout: 5000      # 消息发送超时 ms
+    retry-times-when-send-failed: 3 # 发送失败重试次数
+    max-message-size: 4194304       # 最大消息体 4MB
+  consumer:
+    group: consumer-group
+    enable-orderly: false
+    max-message-size: 4194304       # 最大消息体
+    consume-thread-min: 10          # 消费线程最小数量
+    consume-thread-max: 20          # 消费线程最大数量
+    consume-concurrently-max-span: 200
+    pull-batch-size: 32             # 一次拉取消息数量
+    consume-orderly: false          # 顺序消费
+    consume-message-max-span: 200

@@ -19,7 +19,7 @@ public class RocketMQMessageProducer {
 
     // 自动注入配置文件中绑定的通道
 
-    @Autowired
+    @Resource
     private RocketMQTemplate rocketMQTemplate;
 
     /**
