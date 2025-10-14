@@ -28,13 +28,17 @@ public class OpenApiConfig {
     @Value("${spring.application.name}")
     private String serverName;
 
+    @Value("${server.addr}")
+    private String serverAddr;
+
+
     private static final String SECURITY_SCHEME_NAME = "TokenAuth";
 
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .servers(List.of(
-                        new Server().url("http://localhost:9090/" + serverName) // 这里写网关地址
+                        new Server().url(serverAddr + serverName) // 这里写网关地址
                 ))  // 配置全局 SecurityScheme
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME,

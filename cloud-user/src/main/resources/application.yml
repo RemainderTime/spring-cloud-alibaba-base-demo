@@ -21,3 +21,4 @@ spring:
     import:
       - nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
       - nacos:redis-common.yaml
+      - nacos:common-config.yaml

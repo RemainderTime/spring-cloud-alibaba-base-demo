@@ -22,3 +22,4 @@ spring:
       - nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
       - nacos:seata-common.yaml
       - nacos:rocketmq-common.yaml
+      - nacos:common-config.yaml
