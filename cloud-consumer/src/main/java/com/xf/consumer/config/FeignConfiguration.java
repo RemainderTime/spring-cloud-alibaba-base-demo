@@ -1,10 +1,10 @@
-package com.xf.demo.config;
+package com.xf.consumer.config;
 
-import com.xf.demo.service.fallback.FeignServiceFallback;
+import com.xf.consumer.service.fallback.FeignServiceFallback;
 import org.springframework.context.annotation.Bean;
 
 /**
- * packageName com.xf.demo.config
+ * packageName com.xf.producer.config
  * @author remaindertime
  * @className FeignConfiguration
  * @date 2024/12/4

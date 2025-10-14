@@ -1,17 +1,17 @@
-package com.xf.demo.controller;
+package com.xf.consumer.controller;
 
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
-import com.xf.demo.service.FeignService;
-import com.xf.demo.service.SeataService;
-import com.xf.demo.service.SentinelService;
-import com.xf.demo.utils.SentinelExceptionUtil;
+import com.xf.consumer.service.FeignService;
+import com.xf.consumer.service.SeataService;
+import com.xf.consumer.service.SentinelService;
+import com.xf.consumer.utils.SentinelExceptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * packageName com.xf.demo.controller
+ * packageName com.xf.producer.controller
  * @author remaindertime
  * @className FeignController
  * @date 2024/11/29

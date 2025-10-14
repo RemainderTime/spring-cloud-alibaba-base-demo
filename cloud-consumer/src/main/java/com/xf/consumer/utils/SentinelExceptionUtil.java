@@ -1,4 +1,4 @@
-package com.xf.demo.utils;
+package com.xf.consumer.utils;
 
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 

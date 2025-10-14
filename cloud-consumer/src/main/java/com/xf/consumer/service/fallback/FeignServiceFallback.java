@@ -1,9 +1,9 @@
-package com.xf.demo.service.fallback;
+package com.xf.consumer.service.fallback;
 
-import com.xf.demo.service.FeignService;
+import com.xf.consumer.service.FeignService;
 
 /**
- * packageName com.xf.demo.service.fallback
+ * packageName com.xf.producer.service.fallback
  * @author remaindertime
  * @className FeignServiceFallback
  * @date 2024/12/4

@@ -1,12 +1,12 @@
-package com.xf.demo.service;
+package com.xf.consumer.service;
 
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
-import com.xf.demo.utils.SentinelExceptionUtil;
+import com.xf.consumer.utils.SentinelExceptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * packageName com.xf.demo.service
+ * packageName com.xf.producer.service
  * @author remaindertime
  * @className SentinelService
  * @date 2024/12/4

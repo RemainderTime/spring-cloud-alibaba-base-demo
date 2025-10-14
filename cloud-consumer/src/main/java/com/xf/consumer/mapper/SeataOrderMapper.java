@@ -1,11 +1,11 @@
-package com.xf.demo.mapper;
+package com.xf.consumer.mapper;
 
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 /**
- * packageName com.xf.demo.mapper
+ * packageName com.xf.producer.mapper
  * @author remaindertime
  * @className SeataMapper
  * @date 2024/12/3

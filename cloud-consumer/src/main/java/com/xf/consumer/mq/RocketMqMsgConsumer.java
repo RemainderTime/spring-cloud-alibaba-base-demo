@@ -1,4 +1,4 @@
-package com.xf.demo.mq;
+package com.xf.consumer.mq;
 
 
 import lombok.extern.slf4j.Slf4j;

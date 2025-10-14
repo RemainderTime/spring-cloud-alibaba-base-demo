@@ -1,12 +1,12 @@
-package com.xf.demo.service;
+package com.xf.consumer.service;
 
-import com.xf.demo.mapper.SeataOrderMapper;
+import com.xf.consumer.mapper.SeataOrderMapper;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * packageName com.xf.demo.service
+ * packageName com.xf.producer.service
  * @author remaindertime
  * @className SeataService
  * @date 2024/12/3

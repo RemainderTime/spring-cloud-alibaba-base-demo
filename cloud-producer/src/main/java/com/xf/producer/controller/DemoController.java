@@ -1,12 +1,12 @@
-package com.xf.demo.controller;
+package com.xf.producer.controller;
 
-import com.xf.demo.mapper.SeataProductMapper;
-import com.xf.demo.mq.RocketMQMessageProducer;
+import com.xf.producer.mapper.SeataProductMapper;
+import com.xf.producer.mq.RocketMQMessageProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * packageName com.xf.demo.controller
+ * packageName com.xf.producer.controller
  * @author remaindertime
  * @className DemoController
  * @date 2024/11/28

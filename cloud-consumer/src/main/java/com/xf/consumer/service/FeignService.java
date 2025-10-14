@@ -1,14 +1,14 @@
-package com.xf.demo.service;
+package com.xf.consumer.service;
 
-import com.xf.demo.config.FeignConfiguration;
-import com.xf.demo.service.fallback.FeignServiceFallback;
+import com.xf.consumer.config.FeignConfiguration;
+import com.xf.consumer.service.fallback.FeignServiceFallback;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
- * packageName com.xf.demo.controller.service
+ * packageName com.xf.producer.controller.service
  * @author remaindertime
  * @className FeignService
  * @date 2024/11/29
