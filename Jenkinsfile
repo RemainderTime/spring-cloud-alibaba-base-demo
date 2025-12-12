@@ -186,7 +186,7 @@ pipeline {
                                   --health-interval=30s \
                                   --health-timeout=10s \
                                   --health-retries=3 \
-                                  -e JAVA_OPTS="-Xms512m -Xmx1024m" \
+                                  -e JAVA_OPTS="-Xms256m -Xmx512m" \
                                   ${FULL_IMAGE_NAME}:${IMAGE_TAG}
 
                                 # 等待容器启动
