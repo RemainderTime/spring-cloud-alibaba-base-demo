@@ -19,15 +19,13 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timeout(time: 60, unit: 'MINUTES')
         disableConcurrentBuilds()
-        skipDefaultCheckout(true)   // ←【新增这一行！】非常重要！禁止默认的 HTTPS checkout
+        skipDefaultCheckout(true)
     }
 
     environment {
-        // ========== 需要修改的配置 ==========
         DOCKER_REGISTRY = "registry.cn-hangzhou.aliyuncs.com"
         DOCKER_NAMESPACE = "xf-spring-cloud-alibaba"
         DOCKER_CREDENTIALS_ID = "aliyun-docker-credentials"
-        //ssh方式拉取代码
         GITHUB_REPO = "git@github.com:RemainderTime/spring-cloud-alibaba-base-demo.git"
         GITHUB_CREDENTIALS_ID = "github-ssh-key"
 
@@ -35,12 +33,6 @@ pipeline {
         DEPLOY_HOST = "117.72.35.70"
         DEPLOY_PORT = "22"
         DEPLOY_SSH_ID = "server-ssh-credentials"
-        // ========== 配置结束 ==========
-
-        // 自动生成
-//         GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-//         BUILD_TIMESTAMP = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
-//         IMAGE_TAG = "${BUILD_TIMESTAMP}-${GIT_COMMIT_SHORT}"
     }
 
     stages {
@@ -64,12 +56,9 @@ pipeline {
         stage('1. 检出代码') {
             steps {
                 echo "========== 从 GitHub 拉取代码（SSH 方式） =========="
-
-                // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-                // 关键修改 3：完全用 checkout 方式拉代码（推荐写法，更清晰）
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: 'master']],               // 或者写 'main'，看你仓库默认分支
+                    branches: [[name: 'master']],
                     userRemoteConfigs: [[
                         url: env.GITHUB_REPO,
                         credentialsId: env.GITHUB_CREDENTIALS_ID
@@ -84,7 +73,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('2. Maven构建') {
             steps {
@@ -286,21 +274,27 @@ HEALTH_CHECK
             script {
                 def config = getServiceConfig(params.SERVICE_NAME)
                 echo "========== 构建或部署失败 =========="
-                sshagent(["${DEPLOY_SSH_ID}"]) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'ERROR_LOG'
-                            echo "失败容器日志："
-                            docker logs ''' + config.containerName + ''' 2>&1 | tail -50 || true
+
+                // 修复：正确的 sshagent 用法
+                try {
+                    sshagent(["${DEPLOY_SSH_ID}"]) {
+                        sh script: '''
+                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'ERROR_LOG'
+                                echo "失败容器日志："
+                                docker logs ''' + config.containerName + ''' 2>&1 | tail -50 || true
 ERROR_LOG
-                    ''' || true
+                        ''', returnStatus: true
+                    }
+                } catch (Exception e) {
+                    echo "获取远程日志失败: ${e.message}"
                 }
             }
         }
         always {
             echo "========== 清理本地镜像 =========="
-            sh '''
+            sh script: '''
                 docker images | grep xf-spring-cloud-alibaba | tail -n +4 | awk '{print $3}' | xargs -r docker rmi -f || true
-            '''
+            ''', returnStatus: true
         }
     }
 }

@@ -1,5 +1,5 @@
 # ========== 构建阶段 ==========
-FROM maven:3.8.6-openjdk-17 AS builder
+FROM registry.cn-hangzhou.aliyuncs.com/library/maven:3.8.6-openjdk-17 AS builder
 
 WORKDIR /build
 
