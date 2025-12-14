@@ -28,7 +28,7 @@ WORKDIR /app
 COPY --from=builder /build/cloud-gateway/target/cloud-gateway-*.jar app.jar
 
 # 创建非root用户（安全性）
-RUN useradd -m -u 1000 appuser && chown appuser:appuser /app
+RUN useradd -m -u 1001 appuser && chown appuser:appuser /app
 USER appuser
 
 # 暴露端口
