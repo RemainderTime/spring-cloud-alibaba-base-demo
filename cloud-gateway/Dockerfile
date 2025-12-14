@@ -1,5 +1,5 @@
 # ========== 构建阶段 ==========
-FROM hub.c.163.com/library/maven:3.8.5-openjdk-17 AS builder
+FROM maven:3.8.5-openjdk-17 AS builder
 
 WORKDIR /build
 
