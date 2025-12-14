@@ -23,7 +23,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_REGISTRY = "registry.cn-hangzhou.aliyuncs.com"
+        DOCKER_REGISTRY = "crpi-rq074obigx0czrju.cn-chengdu.personal.cr.aliyuncs.com"
         DOCKER_NAMESPACE = "xf-spring-cloud-alibaba"
         DOCKER_CREDENTIALS_ID = "aliyun-docker-credentials"
         GITHUB_REPO = "git@github.com:RemainderTime/spring-cloud-alibaba-base-demo.git"
@@ -123,7 +123,7 @@ pipeline {
                     )]) {
                         sh '''
                             echo "登录到阿里云镜像仓库..."
-                            echo ${DOCKER_PASS} | docker login ${DOCKER_REGISTRY} -u ${DOCKER_USER} --password-stdin
+                            docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} ${DOCKER_REGISTRY}
 
                             echo "推送镜像：${IMAGE_TAG}"
                             docker push ''' + FULL_IMAGE_NAME + ''':${IMAGE_TAG}
@@ -150,7 +150,7 @@ pipeline {
                         sh '''
                             echo "连接到服务器并部署 ''' + params.SERVICE_NAME + '''..."
 
-                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'DEPLOY_SCRIPT'
+                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << EOF
                                 set -e
 
                                 FULL_IMAGE_NAME="''' + FULL_IMAGE_NAME + '''"
@@ -164,7 +164,7 @@ pipeline {
 
                                 # 登录到阿里云
                                 echo "登录到阿里云镜像仓库..."
-                                echo ${DOCKER_PASS} | docker login ${DOCKER_REGISTRY} -u ${DOCKER_USER} --password-stdin
+                                docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} ${DOCKER_REGISTRY}
 
                                 # 拉取最新镜像
                                 echo "拉取镜像..."
@@ -222,7 +222,7 @@ DEPLOY_SCRIPT
 
                     sshagent(["${DEPLOY_SSH_ID}"]) {
                         sh '''
-                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'HEALTH_CHECK'
+                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << EOF
                                 CONTAINER_NAME="''' + config.containerName + '''"
                                 CONTAINER_PORT="''' + config.containerPort + '''"
 

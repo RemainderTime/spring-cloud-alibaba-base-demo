@@ -7,7 +7,7 @@ WORKDIR /build
 COPY . .
 
 # 下载依赖
-RUN mvn dependency:go-offline -DskipTests
+#RUN mvn dependency:go-offline -DskipTests
 
 # 构建项目（替换{SERVICE_NAME}为你的服务名，如cloud-consumer）
 RUN mvn clean package -DskipTests -pl cloud-gateway -am
