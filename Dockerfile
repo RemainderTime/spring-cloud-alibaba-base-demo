@@ -13,14 +13,16 @@ LABEL org.opencontainers.image.revision=$VCS_REF
 WORKDIR /app
 
 ARG SERVICE_NAME
-# 🟢 关键修正：安装中文字体,如果使用轻量级镜像，需要安装中文字体，以便支持导出相关功能
+# 安装中文字体,如果使用轻量级alpine 镜像，需要安装中文字体，以便支持导出相关功能
 # apk add --no-cache 确保安装后不留下安装缓存，保持镜像体积最小
 # font-noto-cjk 提供了对中文/日文/韩文的良好支持
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
     && apk update \
     && apk add --no-cache font-noto-cjk
-
-RUN useradd -m -u 1001 appuser && chown appuser:appuser /app
+#标准 17-jdk版本创建用户
+#RUN useradd -m -u 1001 appuser && chown appuser:appuser /app
+# alpine 版本镜像创建用户 appuser 命令
+RUN adduser -D -u 1001 appuser && chown appuser:appuser /app
 USER appuser
 
 # 🟢 修改：直接从 Jenkins 的工作目录复制已经编译好的 Jar 包
