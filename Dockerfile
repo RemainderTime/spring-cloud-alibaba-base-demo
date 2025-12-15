@@ -27,7 +27,7 @@ COPY ${SERVICE_NAME}/pom.xml ${SERVICE_NAME}/
 COPY cloud-common/src cloud-common/src
 
 # 编译指定服务
-RUN mvn clean package -DskipTests -pl ${SERVICE_NAME} -am
+RUN mvn package -DskipTests -pl ${SERVICE_NAME} -am
 
 # ========== 运行阶段 ==========
 FROM eclipse-temurin:17-jdk
