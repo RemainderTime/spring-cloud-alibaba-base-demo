@@ -13,7 +13,7 @@ LABEL org.opencontainers.image.revision=$VCS_REF
 WORKDIR /app
 
 ARG SERVICE_NAME
-# 安装中文字体,如果使用轻量级alpine 镜像，需要安装中文字体，以便支持导出相关功能
+# 安装中文字体,如果使用轻量级alpine 镜像，需要安装中文字体，以便支持导出excel图表相关功能，没有可不用安装字体
 # apk add --no-cache 确保安装后不留下安装缓存，保持镜像体积最小
 # font-noto-cjk 提供了对中文/日文/韩文的良好支持
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
