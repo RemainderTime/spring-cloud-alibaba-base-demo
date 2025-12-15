@@ -16,7 +16,9 @@ ARG SERVICE_NAME
 # 🟢 关键修正：安装中文字体,如果使用轻量级镜像，需要安装中文字体，以便支持导出相关功能
 # apk add --no-cache 确保安装后不留下安装缓存，保持镜像体积最小
 # font-noto-cjk 提供了对中文/日文/韩文的良好支持
-RUN apk update && apk add --no-cache font-noto-cjk
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
+    && apk update \
+    && apk add --no-cache font-noto-cjk
 
 RUN useradd -m -u 1001 appuser && chown appuser:appuser /app
 USER appuser
