@@ -1,7 +1,8 @@
 # ========== 构建阶段 ==========
 
 # ========== 运行阶段 ==========
-FROM eclipse-temurin:17-jdk
+#FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:17-jre-alpine
 LABEL maintainer="2439534736@qq.com"
 
 ARG BUILD_TIME
@@ -12,13 +13,17 @@ LABEL org.opencontainers.image.revision=$VCS_REF
 WORKDIR /app
 
 ARG SERVICE_NAME
+# 🟢 关键修正：安装中文字体,如果使用轻量级镜像，需要安装中文字体，以便支持导出相关功能
+# apk add --no-cache 确保安装后不留下安装缓存，保持镜像体积最小
+# font-noto-cjk 提供了对中文/日文/韩文的良好支持
+RUN apk update && apk add --no-cache font-noto-cjk
+
+RUN useradd -m -u 1001 appuser && chown appuser:appuser /app
+USER appuser
 
 # 🟢 修改：直接从 Jenkins 的工作目录复制已经编译好的 Jar 包
 # 注意：Jenkins 编译后的路径通常在 target 下
 COPY ${SERVICE_NAME}/target/${SERVICE_NAME}-*.jar app.jar
-
-RUN useradd -m -u 1001 appuser && chown appuser:appuser /app
-USER appuser
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
