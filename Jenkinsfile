@@ -18,7 +18,6 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timeout(time: 60, unit: 'MINUTES')
         disableConcurrentBuilds()
-        skipDefaultCheckout(true)
     }
 
     environment {
@@ -155,9 +154,6 @@ pipeline {
                     sshagent(["${DEPLOY_SSH_ID}"]) {
                         sh '''
                             ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'DEPLOY_SCRIPT'
-                            echo "连接到服务器并部署 ''' + params.SERVICE_NAME + '''..."
-
-                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << EOF
                                 set -e
 
                                 FULL_IMAGE_NAME="''' + FULL_IMAGE_NAME + '''"
@@ -170,9 +166,9 @@ pipeline {
                                 echo "容器名：${CONTAINER_NAME}"
                                 echo "容器端口：${CONTAINER_PORT}"
 
-                                # 登录到阿里云
-                                echo "登录到阿里云镜像仓库..."
-                                docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} ${DOCKER_REGISTRY}
+                                # 删除旧镜像（只保留最新1个版本）
+                                echo "清理旧镜像..."
+                                docker images ${FULL_IMAGE_NAME} --format "table {{.ID}}\t{{.CreatedAt}}" | tail -n +2 | awk '{print $1}' | xargs -r docker rmi -f || true
 
                                 # 拉取最新镜像
                                 echo "拉取镜像..."
@@ -196,9 +192,9 @@ pipeline {
                                   --memory-swap 512m \\
                                   --memory-reservation 800m \\
                                   -e JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200" \\
-                                  -e NACOS_SERVER_ADDR= "替换服务变量nacos地址" \\
-                                  -e NACOS_USERNAME=替换服务变量nacos用户名 \\
-                                  -e NACOS_PWD=替换服务变量nacos密码 \\
+                                  -e NACOS_SERVER_ADDR=117.72.35.70 \\
+                                  -e NACOS_USERNAME=nacos \\
+                                  -e NACOS_PWD=love..520 \\
                                   ${FULL_IMAGE_NAME}:${IMAGE_TAG}
 
                                 # 等待容器启动
@@ -232,9 +228,9 @@ DEPLOY_SCRIPT
 
                     sshagent(["${DEPLOY_SSH_ID}"]) {
                         sh '''
-                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << EOF
-                                CONTAINER_NAME="''' + config.containerName + '''"
-                                CONTAINER_PORT="''' + config.containerPort + '''"
+                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'HEALTH_CHECK'
+                                CONTAINER_NAME="''' + CONTAINER_NAME_VAR + '''"
+                                CONTAINER_PORT="''' + CONTAINER_PORT_VAR + '''"
 
                                 echo "========== 健康检查 =========="
                                 echo "服务：''' + params.SERVICE_NAME + '''"
@@ -281,24 +277,6 @@ HEALTH_CHECK
             }
         }
         failure {
-            script {
-                def config = getServiceConfig(params.SERVICE_NAME)
-                echo "========== 构建或部署失败 =========="
-
-                // 修复：正确的 sshagent 用法
-                try {
-                    sshagent(["${DEPLOY_SSH_ID}"]) {
-                        sh script: '''
-                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'ERROR_LOG'
-                                echo "失败容器日志："
-                                docker logs ''' + config.containerName + ''' 2>&1 | tail -50 || true
-ERROR_LOG
-                        ''', returnStatus: true
-                    }
-                } catch (Exception e) {
-                    echo "获取远程日志失败: ${e.message}"
-                }
-            }
             echo "========== 构建或部署失败 =========="
         }
         always {
