@@ -19,7 +19,7 @@ ARG SERVICE_NAME
 
 # 复制指定服务的源码（精准，避免无关文件影响缓存）
 COPY ${SERVICE_NAME}/src ${SERVICE_NAME}/src
-COPY ${SERVICE_NAME}/pom.xml ${SERVICE_NAME}/  # 确保覆盖
+COPY ${SERVICE_NAME}/pom.xml ${SERVICE_NAME}/
 # 如果有 resources 单独配置，可加：
 # COPY ${SERVICE_NAME}/src/main/resources ${SERVICE_NAME}/src/main/resources
 
