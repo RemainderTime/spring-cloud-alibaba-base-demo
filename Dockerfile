@@ -2,8 +2,8 @@
 
 # ========== 运行阶段 ==========
 #FROM eclipse-temurin:17-jdk
-#FROM eclipse-temurin:17-jre-alpine
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:17-jre-alpine
+#FROM eclipse-temurin:17-jre-jammy
 LABEL maintainer="2439534736@qq.com"
 
 ARG BUILD_TIME
@@ -21,9 +21,9 @@ ARG SERVICE_NAME
 #    && apk update \
 #    && apk add --no-cache font-noto-cjk
 #标准 17-jdk版本创建用户
-RUN useradd -m -u 1001 appuser && chown appuser:appuser /app
+RUN #useradd -m -u 1001 appuser && chown appuser:appuser /app
 # alpine 版本镜像创建用户 appuser 命令
-RUN #adduser -D -u 1001 appuser && chown appuser:appuser /app
+RUN adduser -D -u 1001 appuser && chown appuser:appuser /app
 USER appuser
 
 # 🟢 修改：直接从 Jenkins 的工作目录复制已经编译好的 Jar 包
