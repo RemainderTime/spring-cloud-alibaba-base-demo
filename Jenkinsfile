@@ -2,15 +2,19 @@ pipeline {
     agent any
 
     parameters {
-        choice(
-            name: 'SERVICE_NAME',
-            choices: [
-                'cloud-consumer',
-                'cloud-gateway',
-                'cloud-producer',
-                'cloud-user'
-            ],
-            description: '选择要构建的微服务'
+        // 🟢 使用 Git Parameter 插件实现下拉选择
+        // name: 变量名，在后面脚本中通过 params.BRANCH_NAME 引用
+        // type: PT_BRANCH 代表只显示分支；如果你想选标签，可以改为 PT_TAG 或 PT_BRANCH_TAG
+        // defaultValue: 默认选中的值
+        // branchFilter: 过滤分支，'.*' 代表匹配所有远程分支
+        gitParameter(
+            name: 'BRANCH_NAME',
+            type: 'PT_BRANCH',
+            defaultValue: 'master',
+            description: '请从下拉列表中选择要发布的分支',
+            branchFilter: 'origin/(.*)',
+            sortMode: 'ASCENDING_SMART',
+            selectedValue: 'DEFAULT'
         )
     }
 
@@ -20,7 +24,6 @@ pipeline {
         disableConcurrentBuilds()
     }
 
-    // 环境变量
     environment {
         DOCKER_REGISTRY = "crpi-rq074obigx0czrju.cn-chengdu.personal.cr.aliyuncs.com"
         DOCKER_NAMESPACE = "xf-spring-cloud-alibaba"
@@ -31,62 +34,65 @@ pipeline {
         DEPLOY_HOST = "117.72.35.70"
         DEPLOY_PORT = "22"
         DEPLOY_SSH_ID = "server-ssh-credentials"
-        // Maven 编译优化参数已假定在 docker-compose.yaml 中全局设置
     }
 
     stages {
-        stage('0. 显示构建信息') {
+        stage('0. 自动识别服务') {
             steps {
-                echo "========== 构建信息 =========="
-                echo "选择的服务：${params.SERVICE_NAME}"
                 script {
-                    def config = getServiceConfig(params.SERVICE_NAME)
-                    echo "容器名：${config.containerName}"
-                    echo "容器端口：${config.containerPort}"
-                    echo "镜像名：${config.imageName}"
-                    // ⚠️ Stage 0 避免运行任何 sh 命令
+                    // 🟢 直接从环境变量获取当前任务名
+                    // 如果任务在文件夹里，JOB_NAME 可能是 "folder/cloud-user"，用 split 取最后一段
+                    env.REAL_SERVICE_NAME = env.JOB_NAME.split('/')[-1]
+
+                    // 校验：确保任务名符合命名规范
+                    if (!env.REAL_SERVICE_NAME.startsWith("cloud-")) {
+                        error "任务名必须以 'cloud-' 开头（当前是: ${env.REAL_SERVICE_NAME}），请修改 Jenkins 任务名称！"
+                    }
+
+                    // 修改构建标题，如：#5-cloud-gateway
+                    currentBuild.displayName = "#${BUILD_NUMBER}-${env.REAL_SERVICE_NAME}"
+
+                    def config = getServiceConfig(env.REAL_SERVICE_NAME)
+                    echo "========== 自动化识别成功 =========="
+                    echo "当前任务路径: ${env.JOB_NAME}"
+                    echo "识别服务模块: ${env.REAL_SERVICE_NAME}"
+                    echo "目标端口: ${config.containerPort}"
+                    echo "===================================="
                 }
-                echo "=========================="
             }
         }
 
         stage('1. 检出代码') {
             steps {
-                echo "========== 从 GitHub 拉取代码 =========="
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: 'master']],
+                    branches: [[name: "${params.BRANCH_NAME}"]],
                     userRemoteConfigs: [[
                         url: env.GITHUB_REPO,
                         credentialsId: env.GITHUB_CREDENTIALS_ID
                     ]]
                 ])
                 script {
-                    // 🟢 修正 1：确保所有环境变量在检出代码后设置
                     env.GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     env.BUILD_TIMESTAMP = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
                     env.IMAGE_TAG = "${env.BUILD_TIMESTAMP}-${env.GIT_COMMIT_SHORT}"
-                    echo "当前 Commit：${env.GIT_COMMIT_SHORT}"
-                    echo "镜像 Tag：${env.IMAGE_TAG}"
                 }
             }
         }
 
-        stage('1.5. Maven 编译') {
+        stage('2. Maven 编译') {
             steps {
-                echo "========== Maven 编译 (速度优化：mvn install) =========="
                 script {
-                    // 🟢 优化 2：使用 mvn install 确保依赖被缓存，且使用 --fail-at-end
-                    sh "mvn install -DskipTests --fail-at-end -pl ${params.SERVICE_NAME} -am -Dmaven.repo.local=/root/.m2/repository"
+                    // 🟢 增量编译识别出的模块
+                    sh "mvn install -DskipTests --fail-at-end -pl ${env.REAL_SERVICE_NAME} -am -Dmaven.repo.local=/root/.m2/repository"
                 }
             }
         }
 
-        stage('2. 构建Docker镜像') {
+        stage('3. 构建与推送镜像') {
             steps {
-                echo "========== 构建Docker镜像 =========="
                 script {
-                    def config = getServiceConfig(params.SERVICE_NAME)
+                    def config = getServiceConfig(env.REAL_SERVICE_NAME)
                     def FULL_IMAGE_NAME = "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${config.imageName}"
 
                     withCredentials([usernamePassword(
@@ -94,136 +100,48 @@ pipeline {
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )]) {
-                       // 🟢 修正：使用 echo + docker login 的标准 Shell 方式，避免 Groovy 插值警告
-                        sh '''
-                            echo "${DOCKER_PASS}" | docker login -u ${DOCKER_USER} --password-stdin ${DOCKER_REGISTRY}
-                        '''
-                    }
-
-                    sh """
-                        docker build \\
-                          --build-arg SERVICE_NAME=${params.SERVICE_NAME} \\
-                          --build-arg BUILD_TIME=${env.BUILD_TIMESTAMP} \\
-                          --build-arg VCS_REF=${env.GIT_COMMIT_SHORT} \\
-                          -t ${FULL_IMAGE_NAME}:${env.IMAGE_TAG} \\
-                          -t ${FULL_IMAGE_NAME}:latest \\
-                          .
-                    """
-                    echo "镜像构建完成"
-                }
-            }
-        }
-
-        stage('3. 推送镜像到阿里云') {
-            steps {
-                echo "========== 推送镜像到阿里云 =========="
-                script {
-                    def config = getServiceConfig(params.SERVICE_NAME)
-                    def FULL_IMAGE_NAME = "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${config.imageName}"
-                    withCredentials([usernamePassword(
-                        credentialsId: "${DOCKER_CREDENTIALS_ID}",
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )]) {
-                        // 🟢 修正 4：使用单行 Shell 命令，避免多行引号和转义问题
-                        sh "echo '推送镜像：${IMAGE_TAG}'; docker push ${FULL_IMAGE_NAME}:${IMAGE_TAG}; echo '推送 latest 标签'; docker push ${FULL_IMAGE_NAME}:latest; echo '推送完成'"
+                        sh "echo \${DOCKER_PASS} | docker login -u \${DOCKER_USER} --password-stdin ${DOCKER_REGISTRY}"
+                        sh "docker build --build-arg SERVICE_NAME=${env.REAL_SERVICE_NAME} -t ${FULL_IMAGE_NAME}:${env.IMAGE_TAG} -t ${FULL_IMAGE_NAME}:latest ."
+                        sh "docker push ${FULL_IMAGE_NAME}:${env.IMAGE_TAG}"
+                        sh "docker push ${FULL_IMAGE_NAME}:latest"
                     }
                 }
             }
         }
 
-        stage('4. 部署到服务器') {
+        stage('4. 远程部署') {
             steps {
-                echo "========== 部署到服务器 =========="
                 script {
-                    def config = getServiceConfig(params.SERVICE_NAME)
+                    def config = getServiceConfig(env.REAL_SERVICE_NAME)
                     def FULL_IMAGE_NAME = "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${config.imageName}"
-                    def IMAGE_TAG_VAR = env.IMAGE_TAG
-                    def CONTAINER_NAME_VAR = config.containerName
-                    def CONTAINER_PORT_VAR = config.containerPort
 
                     sshagent(["${DEPLOY_SSH_ID}"]) {
-                        // 🟢 修正 5：将 Groovy 变量与 Shell 脚本拼接，并在内部转义 Shell 变量
                         sh '''
                             ssh -o StrictHostKeyChecking=no -p ''' + DEPLOY_PORT + ' ' + DEPLOY_USER + '@' + DEPLOY_HOST + ''' << 'DEPLOY_SCRIPT'
-                                # 部署脚本开始
                                 set -e
+                                CONTAINER_NAME="''' + config.containerName + '''"
+                                CONTAINER_PORT="''' + config.containerPort + '''"
                                 FULL_IMAGE_NAME="''' + FULL_IMAGE_NAME + '''"
-                                CONTAINER_NAME="''' + CONTAINER_NAME_VAR + '''"
-                                CONTAINER_PORT="''' + CONTAINER_PORT_VAR + '''"
-                                IMAGE_TAG="''' + IMAGE_TAG_VAR + '''"
-                                echo "========== 部署 ''' + params.SERVICE_NAME + ''' =========="
-                                echo "镜像：\${FULL_IMAGE_NAME}:\${IMAGE_TAG}"
-                                echo "容器名：\${CONTAINER_NAME}"
-                                echo "容器端口：\${CONTAINER_PORT}"
-                                docker pull \${FULL_IMAGE_NAME}:\${IMAGE_TAG}
+                                IMAGE_TAG="''' + env.IMAGE_TAG + '''"
+
                                 docker stop \${CONTAINER_NAME} || true
                                 docker rm \${CONTAINER_NAME} || true
-
-                                # 🟢 修正 6：保留部署服务器上的旧镜像清理逻辑，并转义 awk 的 $1
-                                docker images \${FULL_IMAGE_NAME} --format "table {{.ID}}\t{{.CreatedAt}}\t{{.Tag}}" | tail -n +4 | awk '{print \$1}' | xargs -r docker rmi -f || true
+                                docker pull \${FULL_IMAGE_NAME}:\${IMAGE_TAG}
 
                                 docker run -d \\
                                   --name \${CONTAINER_NAME} \\
                                   -p \${CONTAINER_PORT}:8080 \\
                                   --restart=always \\
                                   -m 512m \\
-                                  --memory-swap 512m \\
-                                  -e JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200" \\
-                                  -e NACOS_SERVER_ADDR="改为自己的nacos地址" \\
-                                  -e NACOS_USERNAME="改为自己的nacos账号" \\
-                                  -e NACOS_PWD="改为自己的nacos密码" \\
+                                  -e JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC" \\
+                                  -e NACOS_SERVER_ADDR=117.72.35.70 \\
+                                  -e NACOS_USERNAME=nacos \\
+                                  -e NACOS_PWD=nacos \\
                                   \${FULL_IMAGE_NAME}:\${IMAGE_TAG}
-                                sleep 15
-                                if docker ps | grep \${CONTAINER_NAME}; then
-                                    echo "✓ 容器运行中"
-                                else
-                                    echo "✗ 容器未运行"
-                                    docker logs \${CONTAINER_NAME} 2>&1 | tail -50 || true
-                                    exit 1 # 部署失败，强制退出
-                                fi
-                                echo "部署完成！"
+
+                                # 保持远程服务器整洁，保留最近 3 个版本的镜像
+                                docker images \${FULL_IMAGE_NAME} --format "{{.ID}}" | tail -n +4 | xargs -r docker rmi -f || true
 DEPLOY_SCRIPT
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('5. 健康检查') {
-            steps {
-                echo "========== 执行健康检查 =========="
-                script {
-                    def config = getServiceConfig(params.SERVICE_NAME)
-                    def CONTAINER_NAME_VAR = config.containerName
-                    def CONTAINER_PORT_VAR = config.containerPort
-
-                    sshagent(["${DEPLOY_SSH_ID}"]) {
-                        // 🟢 修正 7：转义 SSH 脚本内部的 Shell 变量
-                        sh '''
-                            ssh -o StrictHostKeyChecking=no -p ''' + DEPLOY_PORT + ' ' + DEPLOY_USER + '@' + DEPLOY_HOST + ''' << 'HEALTH_CHECK'
-                                CONTAINER_NAME="''' + CONTAINER_NAME_VAR + '''"
-                                CONTAINER_PORT="''' + CONTAINER_PORT_VAR + '''"
-                                echo "========== 健康检查 =========="
-                                echo "服务：''' + params.SERVICE_NAME + '''"
-                                echo "容器：\${CONTAINER_NAME}"
-                                echo "端口：\${CONTAINER_PORT}"
-                                sleep 5
-                                if docker ps | grep \${CONTAINER_NAME}; then
-                                    echo "✓ 容器运行中"
-                                else
-                                    echo "✗ 容器未运行"
-                                    exit 1 # 健康检查失败，强制退出
-                                fi
-                                # 🟢 优化 8：检查 netstat 是否存在，并进行端口检查
-                                if command -v netstat >/dev/null && netstat -tuln 2>/dev/null | grep :\${CONTAINER_PORT}; then
-                                    echo "✓ 端口\${CONTAINER_PORT}已开放"
-                                fi
-                                echo ""
-                                echo "访问地址： http://''' + DEPLOY_HOST + ''':\${CONTAINER_PORT}"
-                                echo ""
-                                echo "健康检查完成 ✓"
-HEALTH_CHECK
                         '''
                     }
                 }
@@ -232,56 +150,24 @@ HEALTH_CHECK
     }
 
     post {
-        success {
-            script {
-                def config = getServiceConfig(params.SERVICE_NAME)
-                echo "========== 构建部署成功 =========="
-                echo "服务：${params.SERVICE_NAME}"
-                echo "镜像：${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${config.imageName}:${env.IMAGE_TAG}"
-                echo "服务器：${DEPLOY_USER}@${DEPLOY_HOST}"
-                echo "容器：${config.containerName}（端口${config.containerPort}）"
-            }
-        }
-        failure {
-            echo "========== 构建或部署失败 =========="
-        }
         always {
-            echo "========== 清理本地旧镜像和构建缓存 (最安全模式) =========="
-            // 🟢 修正 9：使用最安全的 prune 命令，彻底避免与 Jenkins 容器冲突
+            // 🟢 本地资源清理（确保 2核3G 宿主机不会因为频繁构建而磁盘爆炸）
             sh '''
-               docker image prune -f || true
-               docker builder prune -f || true
+                docker image prune -f || true
+                docker builder prune -f || true
             '''
         }
     }
 }
 
-// 辅助函数
 def getServiceConfig(serviceName) {
     def config = [:]
     switch(serviceName) {
-        case 'cloud-consumer':
-            config.containerName = 'cloud-consumer'
-            config.containerPort = '9092'
-            config.imageName = 'cloud-consumer'
-            break
-        case 'cloud-gateway':
-            config.containerName = 'cloud-gateway'
-            config.containerPort = '9090'
-            config.imageName = 'cloud-gateway'
-            break
-        case 'cloud-producer':
-            config.containerName = 'cloud-producer'
-            config.containerPort = '9091'
-            config.imageName = 'cloud-producer'
-            break
-        case 'cloud-user':
-            config.containerName = 'cloud-user'
-            config.containerPort = '9093'
-            config.imageName = 'cloud-user'
-            break
-        default:
-            error("未知的服务: ${serviceName}")
+        case 'cloud-consumer': config.containerName = 'cloud-consumer'; config.containerPort = '9092'; config.imageName = 'cloud-consumer'; break
+        case 'cloud-gateway':  config.containerName = 'cloud-gateway';  config.containerPort = '9090'; config.imageName = 'cloud-gateway'; break
+        case 'cloud-producer': config.containerName = 'cloud-producer'; config.containerPort = '9091'; config.imageName = 'cloud-producer'; break
+        case 'cloud-user':     config.containerName = 'cloud-user';     config.containerPort = '9093'; config.imageName = 'cloud-user'; break
+        default: error("未定义的服务映射: ${serviceName}。请检查 getServiceConfig 函数。")
     }
     return config
 }
