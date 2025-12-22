@@ -31,7 +31,7 @@ pipeline {
         GITHUB_REPO = "git@github.com:RemainderTime/spring-cloud-alibaba-base-demo.git"
         GITHUB_CREDENTIALS_ID = "github-ssh-key"
         DEPLOY_USER = "root"
-        DEPLOY_HOST = "117.72.35.70"
+        DEPLOY_HOST = "服务器ip"
         DEPLOY_PORT = "22"
         DEPLOY_SSH_ID = "server-ssh-credentials"
     }
