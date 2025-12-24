@@ -10,7 +10,7 @@ spring:
         - id: cloud-producer
           uri: lb://cloud-producer
           predicates:
-            - Path=/cloud-producer/**  # 匹配路径 /test/...
+            - Path=/cloud-producer/**
           filters:
             - StripPrefix=1
         - id: cloud-consumer
@@ -22,7 +22,7 @@ spring:
         - id: cloud-user
           uri: lb://cloud-user
           predicates:
-            - Path=/cloud-user/**
+            - Path=//cloud-user/**
           filters:
             - StripPrefix=1
         - id: cloud-user-docs
@@ -37,13 +37,6 @@ spring:
           uri: lb://cloud-producer
           predicates:
             - Path=/cloud-producer/v3/api-docs
-    nacos:
-      discovery: #注册中心
-        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
-        username: ${NACOS_USERNAME:nacos}
-        password: ${NACOS_PWD:nacos}
-        namespace:
-        cluster-name: DEFAULT  # 集群名称，保持一致
     loadbalancer: #开启负载均衡
       nacos:
         enabled: true
@@ -53,9 +46,9 @@ spring:
 springdoc:
   swagger-ui:
     urls:
-      - name: cloud-producer
+      - name: 生产者服务
         url: /cloud-producer/v3/api-docs
-      - name: cloud-consumer
+      - name: 消费者服务
         url: /cloud-consumer/v3/api-docs
       - name: 用户服务
         url: /cloud-user/v3/api-docs
@@ -64,5 +57,10 @@ logging:
   level:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.cloud.nacos.discovery: DEBUG
+
+global:
+  switch:
+    user-header-filter:
+      enabled: false
 
 

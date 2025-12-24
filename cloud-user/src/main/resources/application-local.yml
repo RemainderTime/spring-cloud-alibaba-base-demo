@@ -1,0 +1,37 @@
+server:
+  port: 9093
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+spring:
+  datasource:
+    dynamic:
+      primary: master
+      strict: false #设置严格模式,默认false不启动. 启动后在未匹配到指定数据源时候回抛出异常,不启动会使用默认数据源.
+      datasource:
+        master: #${SERVER_ADDRESS}
+          url: jdbc:mysql://${SERVER_ADDRESS}:3306/xf-boot-base?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+          username:
+          password:
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            minimum-idle: 4
+            maximum-pool-size: 20
+            connection-init-sql: SELECT 1
+            connection-test-query: SELECT 1
+            validation-timeout: 3000
+            max-lifetime: 1800000
+            idle-timeout: 600000
+  cloud:
+    loadbalancer: #开启负载均衡
+      nacos:
+        enabled: true
+      retry:
+        enabled: true # 启用负载均衡重试机制 负载均衡策略默认为轮询，想要修改策略新版本中需要手动java代码配置，新版本中配置文件的方式不支持了,更灵活但略复杂
+
+logging:
+  level:
+    com.alibaba.cloud.nacos.configdata: debug

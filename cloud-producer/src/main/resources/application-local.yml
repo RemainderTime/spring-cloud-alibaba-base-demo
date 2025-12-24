@@ -23,39 +23,25 @@ spring:
         min-evictable-idle-time-millis: 60000  # 空闲连接超过60秒会被丢弃
       datasource:
         master: #${SERVER_ADDRESS}
-          url: jdbc:mysql://${SERVER_ADDRESS}:3307/xf-boot-base?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
-          username: root
+          url: jdbc:mysql://${SERVER_ADDRESS}:3306/xf-boot-base?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+          username:
           password:
           driver-class-name: com.mysql.cj.jdbc.Driver
           hikari:
             minimum-idle: 4  # 主数据源的最小空闲连接数
             maximum-pool-size: 20  # 主数据源的最大连接数
-  cloud:
-    loadbalancer: #开启负载均衡
-      nacos:
-        enabled: true
-      retry:
-        enabled: true # 启用负载均衡重试机制 负载均衡策略默认为轮询，想要修改策略新版本中需要手动java代码配置，新版本中配置文件的方式不支持了,更灵活但略复杂
-    stream: #消息中间件
-      rocketmq:
-        binder:
-          name-server: localhost:9876
-        bindings:
-          producer-out-0:
-            producer:
-              group: output_1
-      bindings:
-        producer-out-0:
-          destination: topic0
-        producer-out-1:
-          destination: topic1
-    sentinel: #流量控制中心
-      transport:
-        dashboard: localhost:8089 # sentinel-dashboard地址
-        port: 8721
-      eager: true
-      filter:
-        enabled: true
+  loadbalancer: #开启负载均衡
+    nacos:
+      enabled: true
+    retry:
+      enabled: true # 启用负载均衡重试机制 负载均衡策略默认为轮询，想要修改策略新版本中需要手动java代码配置，新版本中配置文件的方式不支持了,更灵活但略复杂
+  sentinel: #流量控制中心
+    transport:
+      dashboard: localhost:8089 # sentinel-dashboard地址
+      port: 8721
+    eager: true
+    filter:
+      enabled: true
 
 logging:
   level:
