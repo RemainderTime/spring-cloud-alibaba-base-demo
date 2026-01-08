@@ -1,15 +1,13 @@
-package com.xf.clouduser.model;
+package com.xf.cloudcommon.model;
 
-import com.xf.clouduser.enums.SystemStatus;
+import com.xf.cloudcommon.enums.SystemStatus;
 import lombok.Data;
 
 /**
- * @program: xf-boot-base
+ * @Description: 全局统一响应对象
  * @ClassName RetObj
- * @description: 全局统一响应对象
- * @author: xiongfeng
- * @create: 2022-07-04 15:57
- **/
+ * @Author: xiongfeng
+ */
 @Data
 public class RetObj<T> {
 

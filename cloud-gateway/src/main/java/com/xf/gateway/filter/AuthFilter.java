@@ -64,7 +64,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
         // 获取 Token
         String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (token == null && !token.startsWith("Bearer")) {
+        if (token == null || !token.startsWith("Bearer")) {
             String body = "{\"code\":401,\"msg\":\"请先登录\"}";
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
             DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);

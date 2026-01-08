@@ -1,7 +1,7 @@
 package com.xf.clouduser.controller;
 
 import com.xf.cloudcommon.utils.UserContextHolder;
-import com.xf.clouduser.model.RetObj;
+import com.xf.cloudcommon.model.RetObj;
 import com.xf.clouduser.model.req.LoginInfoReq;
 import com.xf.clouduser.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;

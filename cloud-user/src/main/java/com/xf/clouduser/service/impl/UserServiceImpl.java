@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xf.clouduser.mapper.UserMapper;
-import com.xf.clouduser.model.RetObj;
+import com.xf.cloudcommon.model.RetObj;
 import com.xf.clouduser.model.entity.User;
 import com.xf.clouduser.model.req.LoginInfoReq;
 import com.xf.clouduser.model.vo.LoginUser;

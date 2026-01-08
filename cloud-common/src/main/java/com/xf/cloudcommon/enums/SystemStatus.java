@@ -1,4 +1,4 @@
-package com.xf.clouduser.enums;
+package com.xf.cloudcommon.enums;
 
 import lombok.Getter;
 

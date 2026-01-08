@@ -48,6 +48,11 @@ public class RequestHeaderFilter implements Filter {
             //将用户信息设置到自定义context中
             UserContextHolder.set(map);
         }
-        chain.doFilter(request, response);
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            // 防止内存泄漏，必须清除 ThreadLocal
+            UserContextHolder.clear();
+        }
     }
 }

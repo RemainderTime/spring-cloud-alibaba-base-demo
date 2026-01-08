@@ -1,7 +1,7 @@
 package com.xf.clouduser.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.xf.clouduser.model.RetObj;
+import com.xf.cloudcommon.model.RetObj;
 import com.xf.clouduser.model.entity.User;
 import com.xf.clouduser.model.req.LoginInfoReq;
 import org.springframework.web.bind.annotation.RequestBody;
