@@ -1,10 +1,12 @@
 package com.xf.cloudcommon.config;
 
+import com.xf.cloudcommon.constant.CommonConstant;
 import com.xf.cloudcommon.utils.UserContextHolder;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -23,12 +25,10 @@ import com.alibaba.fastjson2.JSON;
 @Configuration
 public class FeignConfig implements RequestInterceptor {
 
-    private static final String SECRET_KEY = "expected-secret";
-
     @Override
     public void apply(RequestTemplate template) {
         // 1. 设置内部调用密钥，防止绕过网关
-        template.header("X-Internal-Auth", SECRET_KEY);
+        template.header(CommonConstant.X_INTERNAL_AUTH, CommonConstant.SECRET_KEY);
 
         // 2. 传递用户信息 (如果有)
         Map<String, String> userInfo = UserContextHolder.get();
@@ -36,10 +36,17 @@ public class FeignConfig implements RequestInterceptor {
              try {
                 String json = JSON.toJSONString(userInfo);
                 String base64 = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
-                template.header("X-UserInfo", base64);
+                template.header(CommonConstant.X_USERINFO, base64);
             } catch (Exception e) {
                 log.error("Feign用户信息编码失败", e);
             }
+        }
+
+        // 3. 【2026-03-14新增】传递 TraceId
+        // 从当前线程的 MDC 中取出 traceId 塞入 Feign 的请求头中传递给下游
+        String traceId = MDC.get(CommonConstant.TRACE_ID_HEADER);
+        if (traceId != null) {
+            template.header(CommonConstant.TRACE_ID_HEADER, traceId);
         }
     }
 }
