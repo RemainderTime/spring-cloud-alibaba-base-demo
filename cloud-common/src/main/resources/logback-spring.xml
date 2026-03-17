@@ -66,7 +66,7 @@
     <!-- SQL 日志 配置 additivity 这个属性的意思是“不向上传递”。当一条 DEBUG 日志命中了 com.xf 这个 Logger 后，
     它会进入 SQL_FILE，然后就被截断了，不会再流向 root 节点（即 INFO_FILE）。 -->
     <!-- 这里的等级设置也是最低门槛 $$DEBUG < INFO < WARN < ERROR$$-->
-    <logger name="com.xf" level="DEBUG" additivity="false">
+    <logger name="com.xf" level="DEBUG" additivity="true">
         <appender-ref ref="SQL_FILE" />
         <appender-ref ref="STDOUT" />
     </logger>
