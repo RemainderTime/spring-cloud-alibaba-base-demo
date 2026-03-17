@@ -53,14 +53,19 @@ springdoc:
       - name: 用户服务
         url: /cloud-user/v3/api-docs
 
-logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.cloud.nacos.discovery: DEBUG
-
 global:
   switch:
     user-header-filter:
       enabled: false
+
+logging:
+  level:
+    root: info
+    # 屏蔽 Netty 频繁的握手和心跳
+    reactor.netty: warn
+    # 屏蔽 Nacos 频繁的服务心跳检查
+    com.alibaba.nacos: warn
+    # 网关路由细节，平时设为 info，排查路由不通时才开 debug
+    org.springframework.cloud.gateway: info
 
 

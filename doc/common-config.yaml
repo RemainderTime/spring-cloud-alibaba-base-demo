@@ -1,2 +1,14 @@
 server:
   addr: http://ip:9090/
+
+logging:
+  config: classpath:logback-spring.xml
+  file:
+    # 动态拼接：所有服务都会根据自己的名字创建独立的日志文件夹
+    path: /data/servers/logs/${spring.application.name}
+  level:
+    root: info
+    # 你的业务包名，设为 debug 才能看到你写的调试日志
+    #com.xf: info
+    # 屏蔽一些无关紧要的 Spring 启动细节
+    org.springframework: warn
