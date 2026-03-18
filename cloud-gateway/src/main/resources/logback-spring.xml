@@ -49,8 +49,11 @@
         <appender-ref ref="INFO_FILE"/>
     </appender>
 
+    <!--屏蔽 Netty 频繁的握手和心跳 -->
     <logger name="reactor.netty" level="WARN" />
+    <!--屏蔽 Nacos 频繁的服务心跳检查-->
     <logger name="org.springframework.cloud.gateway" level="INFO" />
+    <!--网关路由细节，平时设为 info，排查路由不通时才开 debug-->
     <logger name="com.alibaba.nacos" level="WARN" />
 
     <springProfile name="dev,test">
