@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds">
+    <shutdownHook class="ch.qos.logback.core.hook.DefaultShutdownHook"/>
 
     <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="gateway-service"/>
     <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="logs/${APP_NAME}"/>
