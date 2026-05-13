@@ -14,24 +14,32 @@
         </encoder>
     </appender>
 
+    <!-- INFO 级别及以上日志写入 JSON 文件（Filebeat 采集主力）-->
     <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/info.log</file>
+<!--        <file>${LOG_PATH}/info.log</file>-->
+        <file>${LOG_PATH}/info.json</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${LOG_PATH}/history/info.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
             <maxFileSize>500MB</maxFileSize>
             <maxHistory>15</maxHistory>
             <totalSizeCap>30GB</totalSizeCap>
         </rollingPolicy>
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
+<!--        <encoder>-->
+<!--            <pattern>${LOG_PATTERN}</pattern>-->
+<!--            <charset>UTF-8</charset>-->
+<!--        </encoder>-->
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>false</includeContext>
+            <includeMdc>true</includeMdc> <!-- 自动将 MDC 中的 traceId 变成独立 JSON 字段 -->
+            <customFields>{"serviceName":"${APP_NAME}"}</customFields> <!-- 附加服务名标签 -->
         </encoder>
     </appender>
 
+    <!-- ERROR 级别日志写入 JSON 文件（极端情况下的兜底防线）-->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/error.log</file>
+<!--        <file>${LOG_PATH}/error.log</file>-->
+        <file>${LOG_PATH}/error.json</file>
         <!-- 匹配 ThresholdFilter (临界值过滤器) 大于等于（匹配指定级别及以上）如果设为 ERROR，接收 ERROR 和 FATAL。-->
-
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
@@ -40,37 +48,16 @@
             <maxFileSize>1GB</maxFileSize>
             <maxHistory>60</maxHistory>
         </rollingPolicy>
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
+<!--        <encoder>-->
+<!--            <pattern>${LOG_PATTERN}</pattern>-->
+<!--            <charset>UTF-8</charset>-->
+<!--        </encoder>-->
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>false</includeContext>
+            <includeMdc>true</includeMdc>
+            <customFields>{"serviceName":"${APP_NAME}"}</customFields>
         </encoder>
     </appender>
-
-    <!-- SQL 日志 写入文件配置 -->
-    <appender name="SQL_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/sql.log</file>
-        <!-- 指定级别 LevelFilter (级别过滤器) 如果设为 DEBUG，只收 DEBUG-->
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>DEBUG</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/history/sql.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <maxFileSize>10MB</maxFileSize>
-            <maxHistory>7</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
-        </encoder>
-    </appender>
-    <!-- SQL 日志 配置 additivity 这个属性的意思是“不向上传递”。当一条 DEBUG 日志命中了 com.xf 这个 Logger 后，
-    它会进入 SQL_FILE，然后就被截断了，不会再流向 root 节点（即 INFO_FILE）。 -->
-    <!-- 这里的等级设置也是最低门槛 $$DEBUG < INFO < WARN < ERROR$$-->
-    <logger name="com.xf" level="DEBUG" additivity="true">
-        <appender-ref ref="SQL_FILE" />
-        <appender-ref ref="STDOUT" />
-    </logger>
 
     <appender name="ASYNC_INFO" class="ch.qos.logback.classic.AsyncAppender">
         <queueSize>1024</queueSize>

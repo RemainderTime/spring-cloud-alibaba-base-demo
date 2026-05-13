@@ -28,6 +28,7 @@
         <jwt.version>3.19.2</jwt.version>
         <rocketmq.boot.version>2.3.4</rocketmq.boot.version>
         <rocketmq.version>5.3.0</rocketmq.version>
+        <logstash.logback.encoder.version>6.6</logstash.logback.encoder.version>
     </properties>
     <modules>
         <module>cloud-producer</module>
@@ -89,6 +90,12 @@
                 <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-client</artifactId>
                 <version>${rocketmq.version}</version>
+            </dependency>
+            <!-- Logstash Logback Encoder: 用于将日志输出为 JSON 结构，方便 ES 建立索引 -->
+            <dependency>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${logstash.logback.encoder.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
