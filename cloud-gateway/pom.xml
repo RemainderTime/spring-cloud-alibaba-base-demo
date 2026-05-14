@@ -52,6 +52,11 @@
             <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
             <version>${springdoc.version}</version>
         </dependency>
+        <!-- Logstash Logback Encoder: 用于将日志输出为 JSON 结构，方便 ES 建立索引 -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+        </dependency>
 	</dependencies>
 
 	<build>
