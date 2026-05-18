@@ -50,7 +50,15 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String traceId = UUID.randomUUID().toString().replace("-", "");
 
         // 2. 【2026-03-14新增】将 TraceId 放入响应头，让前端在浏览器控制台能看到
-        exchange.getResponse().getHeaders().set(TRACE_ID_HEADER, traceId);
+        // 采用 beforeCommit 机制及 try-catch，防止 Spring Security 等 Filter 链产生 ReadOnlyHttpHeaders 导致 500 崩溃
+        exchange.getResponse().beforeCommit(() -> {
+            try {
+                exchange.getResponse().getHeaders().set(TRACE_ID_HEADER, traceId);
+            } catch (Exception e) {
+                log.debug("无法写入 TraceId 到响应头：{}", e.getMessage());
+            }
+            return Mono.empty();
+        });
 
         ServerHttpRequest request = exchange.getRequest();
         String requestURI = request.getURI().getPath();
@@ -152,7 +160,11 @@ public class AuthFilter implements GlobalFilter, Ordered {
     // 抽离错误返回方法，保证代码整洁
     private Mono<Void> errorResponse(ServerWebExchange exchange, String body, HttpStatus status) {
         exchange.getResponse().setStatusCode(status);
-        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        try {
+            exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        } catch (Exception e) {
+            log.debug("无法设置 Content-Type：{}", e.getMessage());
+        }
         byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
         return exchange.getResponse().writeWith(Mono.just(buffer));
