@@ -63,8 +63,24 @@ public class AuthFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         String requestURI = request.getURI().getPath();
 
+        // 应对 Spring Security 6.3.4+ 引起的 StrictFirewallHttpHeaders 只读 Bug
+        // 显式克隆出一个完全可写的 HttpHeaders，并使用 Decorator 包装原始 request，确保 request.mutate() 不会抛出 UnsupportedOperationException
+        HttpHeaders writableHeaders = new HttpHeaders();
+        try {
+            writableHeaders.addAll(request.getHeaders());
+        } catch (Exception e) {
+            log.warn("拷贝请求头异常：{}", e.getMessage());
+        }
+
+        ServerHttpRequest decoratedRequest = new ServerHttpRequestDecorator(request) {
+            @Override
+            public HttpHeaders getHeaders() {
+                return writableHeaders;
+            }
+        };
+
         // 3. 封装请求修改逻辑（标准 WebFlux 做法）
-        ServerHttpRequest.Builder requestBuilder = request.mutate()
+        ServerHttpRequest.Builder requestBuilder = decoratedRequest.mutate()
                 .header("X-Internal-Auth", SECRET_KEY)
                 .header(TRACE_ID_HEADER, traceId);
 
