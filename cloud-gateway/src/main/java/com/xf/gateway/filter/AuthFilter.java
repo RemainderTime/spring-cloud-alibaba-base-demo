@@ -37,6 +37,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private static final List<String> EXCLUDE_PATH_LIST = List.of("/cloud-user/user/login");
     private static final String SECRET_KEY = "expected-secret";
     private static final String TRACE_ID_HEADER = "traceId";
+    private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER = new com.fasterxml.jackson.databind.ObjectMapper();
 
     @Resource
     private RedisTemplate redisTemplate;
@@ -54,54 +55,58 @@ public class AuthFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         String requestURI = request.getURI().getPath();
 
-        // 3. 封装装饰器的逻辑
-        ServerHttpRequestDecorator decorator = new ServerHttpRequestDecorator(request) {
-            @Override
-            public HttpHeaders getHeaders() {
-                HttpHeaders headers = new HttpHeaders();
-                headers.putAll(super.getHeaders());
-                headers.set("X-Internal-Auth", SECRET_KEY);
-                headers.set(TRACE_ID_HEADER, traceId); // 将 TraceId 传给下游微服务
-                return headers;
-            }
-        };
+        // 3. 封装请求修改逻辑（标准 WebFlux 做法）
+        ServerHttpRequest.Builder requestBuilder = request.mutate()
+                .header("X-Internal-Auth", SECRET_KEY)
+                .header(TRACE_ID_HEADER, traceId);
 
-        // --- 白名单逻辑 ---
-        if (EXCLUDE_PATH_LIST.stream().anyMatch(requestURI::startsWith) ||
-                requestURI.contains("/v3/api-docs") ||
-                requestURI.contains("/doc.html")) {
-            //return chain.filter(exchange.mutate().request(decorator).build());
-            return this.successResponse(exchange, chain, traceId, decorator, startTime);
+        // --- 1. 白名单逻辑 ---
+        if (isWhiteList(requestURI)) {
+            return this.successResponse(exchange, chain, traceId, null, requestBuilder.build(), startTime);
         }
 
-        // --- 获取 Token 逻辑 ---
+        // --- 2. 获取 Token 逻辑 ---
         String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (token == null || !token.startsWith("Bearer")) {
-            // 这里返回 401，此时前端已经在 Response Header 拿到 traceId 了
-            return errorResponse(exchange, "{\"code\":401,\"msg\":\"请先登录\"}", HttpStatus.UNAUTHORIZED);
+            // 返回格式统一对齐 RetObj 的 {"code", "message", "data"} 字段
+            return errorResponse(exchange, "{\"code\":401,\"message\":\"请先登录\"}", HttpStatus.UNAUTHORIZED);
         }
 
-        // --- 校验 Token 逻辑 ---
-        token = token.startsWith("Bearer") ? token.substring(7) : token;
-        String key = "alibaba-token:" + token;
-        String userInfoJson = (String) redisTemplate.opsForValue().get(key);
+        // --- 3. 校验 Token 逻辑 ---
+        String finalToken = token.startsWith("Bearer") ? token.substring(7) : token;
+        String key = "alibaba-token:" + finalToken;
 
-        if (Objects.isNull(userInfoJson)) {
-            return errorResponse(exchange, "{\"code\":500,\"msg\":\"登录token无效或已过期\"}", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        // 【优化】避免在 Netty 的 EventLoop 线程中执行阻塞的 Redis 查询
+        return Mono.fromCallable(() -> (String) redisTemplate.opsForValue().get(key))
+                .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
+                .flatMap(userInfoJson -> {
+                    // --- 4. 最终逻辑：添加用户信息并放行 ---
+                    String base64 = Base64.getEncoder().encodeToString(userInfoJson.getBytes(StandardCharsets.UTF_8));
+                    requestBuilder.header("X-UserInfo", base64);
+                    
+                    String userId = extractUserId(userInfoJson);
+                    return this.successResponse(exchange, chain, traceId, userId, requestBuilder.build(), startTime);
+                })
+                // 如果 Mono.fromCallable 返回 null（即 Redis 中没有此 token），会发出 empty 信号，在此处拦截并报错
+                .switchIfEmpty(Mono.defer(() -> errorResponse(exchange, "{\"code\":500,\"message\":\"登录token无效或已过期\"}", HttpStatus.INTERNAL_SERVER_ERROR)));
+    }
 
-        // --- 最终逻辑：添加用户信息并放行 ---嵌套装饰
-        ServerHttpRequestDecorator finalDecorator = new ServerHttpRequestDecorator(decorator) {
-            @Override
-            public HttpHeaders getHeaders() {
-                HttpHeaders headers = super.getHeaders();
-                String base64 = Base64.getEncoder().encodeToString(userInfoJson.getBytes(StandardCharsets.UTF_8));
-                headers.set("X-UserInfo", base64);
-                return headers;
+    private boolean isWhiteList(String requestURI) {
+        return EXCLUDE_PATH_LIST.stream().anyMatch(requestURI::startsWith) ||
+                requestURI.contains("/v3/api-docs") ||
+                requestURI.contains("/doc.html");
+    }
+
+    private String extractUserId(String userInfoJson) {
+        try {
+            com.fasterxml.jackson.databind.JsonNode jsonNode = MAPPER.readTree(userInfoJson);
+            if (jsonNode.has("id")) {
+                return jsonNode.get("id").asText();
             }
-        };
-//        return chain.filter(exchange.mutate().request(finalDecorator).build());
-        return this.successResponse(exchange, chain, traceId, finalDecorator, startTime);
+        } catch (Exception e) {
+            log.error("解析用户信息异常", e);
+        }
+        return null;
     }
 
     /**
@@ -111,24 +116,33 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * @return
      */
     private Mono<Void> successResponse(ServerWebExchange exchange, GatewayFilterChain chain,
-                                       String traceId, ServerHttpRequestDecorator decorator,
+                                       String traceId, String userId, ServerHttpRequest mutatedRequest,
                                        long startTime) {
-        return chain.filter(exchange.mutate().request(decorator).build())
+        return chain.filter(exchange.mutate().request(mutatedRequest).build())
                 .doFinally(signalType -> {
                     // 计算耗时
                     long duration = System.currentTimeMillis() - startTime;
                     // 获取响应状态码
                     HttpStatus statusCode = (HttpStatus) exchange.getResponse().getStatusCode();
 
-                    // 打印网关访问日志
-                    // 格式：[Access] IP 路径 结果 耗时 traceId
-                    log.info("[Access] IP: {}, Method: {}, Path: {}, Status: {}, Time: {}ms, TraceId: {}",
-                            exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(),
-                            exchange.getRequest().getMethod(),
-                            exchange.getRequest().getURI().getPath(),
-                            statusCode != null ? statusCode.value() : "unknown",
-                            duration,
-                            traceId);
+                    // 将变量放入 MDC，便于 LogstashEncoder 提取为独立 JSON 字段
+                    MDC.put("traceId", traceId);
+                    
+                    String ip = exchange.getRequest().getRemoteAddress() != null ? 
+                            exchange.getRequest().getRemoteAddress().getAddress().getHostAddress() : "unknown";
+                    String method = exchange.getRequest().getMethod().name();
+                    String path = exchange.getRequest().getURI().getPath();
+                    int status = statusCode != null ? statusCode.value() : -1;
+                    
+                    if (StringUtils.hasText(userId)) {
+                        MDC.put("userId", userId);
+                        log.info("[Access] IP: {}, Method: {}, Path: {}, Status: {}, Time: {}ms, TraceId: {}, UserId: {}",
+                                ip, method, path, status, duration, traceId, userId);
+                        MDC.remove("userId");
+                    } else {
+                        log.info("[Access] IP: {}, Method: {}, Path: {}, Status: {}, Time: {}ms, TraceId: {}",
+                                ip, method, path, status, duration, traceId);
+                    }
 
                     // 清理当前线程 MDC
                     MDC.remove("traceId");
@@ -137,10 +151,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
     // 抽离错误返回方法，保证代码整洁
     private Mono<Void> errorResponse(ServerWebExchange exchange, String body, HttpStatus status) {
-        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-        DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
         exchange.getResponse().setStatusCode(status);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+        DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
         return exchange.getResponse().writeWith(Mono.just(buffer));
     }
 
