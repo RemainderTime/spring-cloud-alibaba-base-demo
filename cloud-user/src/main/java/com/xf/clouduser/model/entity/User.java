@@ -29,4 +29,11 @@ public class User {
 
     @TableField(value = "create_time")
     private Date createTime;
+
+    @TableField(value = "update_time")
+    private Date updateTime;
+
+    private String createBy;
+
+    private String updateBy;
 }
